@@ -1,0 +1,126 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Load the required packages first by performing the following chunk
+
+```{r}
+if(!require("tidyverse")){
+  install.packages("tidyverse")
+}
+library("tidyverse")
+if(!require("ggrepel")){
+  install.packages("ggrepel")
+}
+library("ggrepel")
+if(!require("lubridate")){
+  install.packages("lubridate")
+}
+library("lubridate")
+```
+
+
+Then upload the data of the case study located
+
+https://www.kaggle.com/olistbr/brazilian-ecommerce
+
+Q.1 Which is the unique code that made the most orders?
+
+```{r}
+olist_customers_dataset%>%group_by(customer_unique_id)%>%tally(sort=TRUE)%>%head(1)->result
+result$customer_unique_id
+```
+
+Q.2 Display all the details of the code orders from the previous query as they can be extracted from the tables customer, orders_items, products, payments.
+```{r}
+olist_customers_dataset%>%
+  full_join(olist_orders_dataset)%>%
+  full_join(olist_order_payments_dataset)%>%
+  filter(customer_unique_id==result$customer_unique_id)->result
+print(result)
+
+```
+
+Q.3 Display in a diagram the details of all the orders in the table resulting from the previous query. Horizontal axis date of purchase (approved order) (in ascending order), Vertical axis order cost, coloring points based on the column installments, point label based on the column order_approved_at.
+```{r}
+result%>%
+  ggplot(aes(x=order_approved_at,y=payment_value,color=payment_installments,label=as.character(order_approved_at)))+geom_text(vjust=2)+geom_line()+geom_point()
+
+```
+
+Q.4 Display per year and per month of the recording period the total number of customer purchases in query 1.
+
+```{r}
+
+result$order_approved_at=ymd_hms(result$order_approved_at)
+result%>%mutate(y=year(order_approved_at),m=month(order_approved_at))%>%group_by(y,m)%>%tally(sort=TRUE)
+
+```
+
+
+Q.5 Find and display in which month the smallest inflow of revenue took place (for all products delivered).
+```{r}
+olist_orders_dataset$order_purchase_timestamp=ymd_hms(olist_orders_dataset$order_approved_at)
+olist_orders_dataset%>%
+mutate(y=year(order_approved_at),m=month(order_approved_at),d=day(order_approved_at))%>%
+  filter(order_status=="delivered")%>%
+  full_join(olist_order_items_dataset)%>%group_by(m)%>%na.omit()%>%summarize(s=sum(price,na.rm = TRUE))%>%arrange(s)
+
+```
+Q.6: Represent in a diagram the monthly income of the company for the recording period. Horizontal axis (day), vertical axis total revenue for products with delivered status, color based on year points, panel grid month ~ time.
+```{r warning=FALSE}
+olist_orders_dataset$order_approved_at=ymd_hms(olist_orders_dataset$order_approved_at)
+olist_orders_dataset%>%mutate(y=year(order_approved_at),m=month(order_approved_at),d=day(order_approved_at))%>%
+full_join(olist_order_payments_dataset)%>%
+filter(order_status=="delivered")%>%
+group_by(y,m,d)%>%
+  summarise(s=sum(payment_value,na.rm = TRUE))%>%na.omit()%>%
+  ggplot(aes(x=d,y=s,color=as.factor(y)))+geom_point()+geom_line()+facet_grid(y~m)
+  
+```
+
+
+Q.7 How many customers have declared as location "campinas"?
+```{r}
+olist_customers_dataset%>%filter(customer_city=="campinas")%>%tally()
+
+```
+
+
+Q.8 Display the product category with the most orders and display in a frequency chart its ratings (rating in horizontal axis).
+```{r}
+olist_products_dataset%>%
+  group_by(product_category_name)%>%
+  tally(sort=TRUE)%>%head(1)->tmp
+print(tmp)
+olist_products_dataset%>%
+  filter(product_category_name==tmp$product_category_name)%>%
+  full_join(olist_order_items_dataset)%>%
+  full_join(olist_orders_dataset)%>%
+  full_join(olist_order_reviews_dataset)%>%
+  ggplot(aes(x=review_score))+geom_histogram()
+```
+
+Q.9 Which is the total shipping cost of products purchased from the city "rio de janeiro" (delivered)?
+```{r}
+olist_customers_dataset%>%
+  filter(customer_city=="rio de janeiro")%>%
+  full_join(olist_orders_dataset)%>%
+  filter(order_status=="delivered")%>%
+  full_join(olist_order_items_dataset)%>%
+  summarize(s=sum(freight_value))
+```
+
+
+Q.10: Which product category had the best average rating?
+```{r}
+olist_products_dataset%>%
+  full_join(product_category_name_translation)%>%
+  full_join(olist_order_items_dataset)%>%
+  full_join(olist_orders_dataset)%>%
+  full_join(olist_order_reviews_dataset)%>%
+  group_by(product_category_name_english)%>%
+  summarise(m=mean(review_score,na.rm = TRUE))%>%
+  arrange(desc(m))
+```
