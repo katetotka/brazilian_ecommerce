@@ -7,7 +7,7 @@ This dataset was generously provided by Olist, the largest department store in B
 # The content of this data
 The data is divided into 9 different datasets and 52 columns. In the schema below, it is depicted the way by which the datasets are connected with each other:
 ![image](https://user-images.githubusercontent.com/99084086/153183648-07f2c85b-c35e-490f-9426-87136d83f024.png)
-You can download the datasets from the data explorer section on ![kaggle's](https://www.kaggle.com/olistbr/brazilian-ecommerce) website.
+You can download the datasets from the data explorer section on [kaggle's](https://www.kaggle.com/olistbr/brazilian-ecommerce) website.
 
 # Exploratory Data Analysis
 A brief EDA is made on these 9 different datasets by using the open source language R and some of its packages (tidyverse, ggrepel, lubridate). This analysis could also be done by using SQL (as we are talking about tabular datasets that are connected through keys). In this analysis, the following questions are answered:
@@ -20,4 +20,4 @@ A brief EDA is made on these 9 different datasets by using the open source langu
 6. How many customers have declared as location "campinas"?
 7. Which product category had the most orders?
 8. Which is the total shipping cost of products purchased from rio de janeiro?
-9. Which product category that had the best average rating?
+9. Which product category had the best average rating?
